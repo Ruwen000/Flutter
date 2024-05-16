@@ -1,21 +1,36 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'Item.dart';
 import 'package:http/http.dart' as http;
 
 Widget deals() {
-  Future<List<Item>> fetchitems() async {
-    final response = await http.get(Uri.parse('http://localhost:3000/app'));
-
+  fetchitems() async {
+    final response = await http.get(Uri.parse('http://10.0.2.2:3000/data'));
     if (response.statusCode == 200) {
-      final itemlist = jsonDecode(response.body);
-      final items = itemlist.map((item) {
-        return item.fromJson(item);
-      }).toList();
-      return items;
+      return response.body;
     } else {
-      throw Exception("Failed to fetch items");
+      throw Exception('Failed to load data');
+    }
+  }
+
+  sendData() async {
+    final response = await http.post(
+      Uri.parse(
+          'http://10.0.2.2:3000/sendData'), // Beispiel-Endpunkt für das Senden von Daten
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'name': 'John Doe',
+        'email': 'john.doe@example.com',
+      }),
+    );
+    if (response.statusCode == 200) {
+      // Erfolgreich gesendet
+      print('Daten wurden erfolgreich gesendet');
+    } else {
+      // Fehler beim Senden
+      print('Fehler beim Senden der Daten: ${response.statusCode}');
     }
   }
 
@@ -23,28 +38,23 @@ Widget deals() {
     child: Column(
       children: [
         FutureBuilder(
-            future: fetchitems(),
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: snapshot.data!.length,
-                    itemBuilder: (context, index) {
-                      final item = snapshot.data![index];
-                      return ListTile(
-                        title: Text(item.name),
-                      );
-                    });
-              } else if (snapshot.hasError) {
-                return Center(
-                  child: Text(snapshot.error.toString()),
-                );
-              } else {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-            })
+          future: fetchitems(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const CircularProgressIndicator();
+            } else if (snapshot.hasError) {
+              return Text('Error: ${snapshot.error}');
+            } else {
+              return Text('Data from server: ${snapshot.data}');
+            }
+          },
+        ),
+        ElevatedButton(
+          onPressed: () {
+            sendData();
+          },
+          child: const Text('Daten senden'),
+        ),
       ],
     ),
   );

@@ -1,56 +1,23 @@
 const express = require('express');
-
-//app confi
+const bodyParser = require('body-parser');
 const app = express();
-
 const port = 3000;
-//middleware confi
-app.use(express.json());
 
-let ItemList = [
-    {id:1, name: "name here"},
-    {id:2, name: "name here2"}
-];
+app.use(bodyParser.json());
 
-//api routes
-
-app.get('/app',(req, res) => {
-    return res.json(ItemList);
-});
-app.post('/app',(req, res) => {
-    let newTask = {
-        id: ItemList.length + 1,
-        name: req.body.name,
-    }
-    ItemList.push(newTask);
-    res.status(201).json(newTask);
-});
-app.put('/app/:id',(req, res) => {
-    let itemId = req.params.id;
-    let updateItem = req.body;
-    let index = ItemList.findIndex(item => item.id ===itemId);
-
-    if(index !== -1){
-        ItemList[index] = updateItem;
-        res.json(updateItem);
-    }else{
-        res.status(404).json({message:"Item not found"});
-    }
-});
-app.delete('/app/:id',(req, res) => {
-    let itemId = req.params.id;
-    let index = ItemList.findIndex(item => item.id ===itemId);
-
-    if(index !== -1){
-        let deletItem = ItemList.splice(index, 1);
-        res.json(deletItem[0]);
-    }else{
-        res.status(404).json({message:"Item not found"});
-    }
+app.get('/data', (req, res) => {
+  // Hier kannst du die Daten logisch generieren oder aus einer Datenbank abrufen
+  const data = { message: 'Hello from Node.js server!' };
+  res.json(data);
 });
 
-//listener
+app.post('/sendData', (req, res) => {
+    const { name, email } = req.body;
+    console.log('Empfangene Daten:', name, email);
+    // Hier kannst du die empfangenen Daten verarbeiten, z.B. in einer Datenbank speichern
+    res.send('Daten erfolgreich empfangen');
+  });
 
-app.listen(port , () => {
-    console.log("Listining on Port 3000");
-})
+app.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}`);
+});
