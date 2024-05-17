@@ -1,0 +1,14 @@
+[
+    {
+      "name": "Kevin",
+      "skill": ["Arbeiten", "Palmen", "Naomi stalken"]
+    },
+    {
+        "name": "Ruwen",
+        "skill": ["schach", "Kevin nerven", "Naomi sagen"]
+    },
+    {
+        "name": "Rudi",
+        "skill": ["albi", "hanuta", "essen"]
+    }
+  ]

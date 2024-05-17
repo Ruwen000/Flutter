@@ -1,6 +1,9 @@
 // ignore_for_file: non_constant_identifier_names, camel_case_types
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'searchDaten.dart';
 
 class search extends StatefulWidget {
   const search({super.key});
@@ -10,9 +13,6 @@ class search extends StatefulWidget {
 }
 
 class searchpage extends State<search> {
-  final _Names = <String>[];
-  final _Fav = <String>{};
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,69 +24,83 @@ class searchpage extends State<search> {
   }
 
   Widget _buildBody() {
-    return ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemBuilder: (context, i) {
-          if (i.isOdd) {
-            return const Divider();
-          }
-          if (i ~/ 2 >= _Names.length) {
-            _Names.addAll(_Generator());
-          }
-          return _buildRow(_Names[i ~/ 2]);
-        });
-  }
-
-  Iterable<String> _Generator() {
-    List<String> myNames = [
-      'Kevin : IT',
-      'Ruwen : Schach',
-      'Rudi : Spielen',
-      'Michi : essen',
-      'Plackner : weinen',
-      'Naomi : klettern',
-      'Steffen : flicken',
-      'Samuel : trainiren',
-      'evelyn : alles',
-      'Laura : Kochen',
-      'Hannah : streiten',
-    ];
-    return myNames;
-  }
-
-  Widget _buildRow(String Name) {
-    final marked = _Fav.contains(Name);
-
-    return ListTile(
-      title: Text(Name),
-      trailing: Icon(
-        marked ? Icons.favorite : Icons.favorite_border,
-        color: marked ? Colors.red : null,
+    return Center(
+      child: Column(
+        children: [
+          Expanded(
+            child: FutureBuilder<List<searchDaten>>(
+              future: fetchDeals(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No Data Found'));
+                } else {
+                  List<searchDaten> deals = snapshot.data!;
+                  return ListView.builder(
+                    itemCount: deals.length,
+                    itemBuilder: (context, index) {
+                      return Card(
+                        child: ListTile(
+                          title: Text('Name: ${deals[index].name}'),
+                          subtitle: Text('Talent: ${deals[index].skill}'),
+                          onTap: () {
+                            setState(() {
+                              Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                    builder: (BuildContext context) {
+                                  final Name0 = deals[index].name;
+                                  return Scaffold(
+                                      appBar: AppBar(
+                                        title: Text(Name0),
+                                      ),
+                                      body: Center(
+                                        child: Column(
+                                          children: [
+                                            const CircleAvatar(
+                                              backgroundImage: NetworkImage(
+                                                  'https://picsum.photos/100'),
+                                              radius: 70,
+                                            ),
+                                            Expanded(
+                                                child: ListView.builder(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            16),
+                                                    itemCount: deals[index]
+                                                        .skill
+                                                        .length,
+                                                    itemBuilder: (context, i) {
+                                                      return ListTile(
+                                                        title: Text(deals[index]
+                                                            .skill[i]),
+                                                      );
+                                                    }))
+                                          ],
+                                        ),
+                                      ));
+                                }),
+                              );
+                            });
+                          },
+                        ),
+                      );
+                    },
+                  );
+                }
+              },
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              sendData();
+            },
+            child: const Text('Daten senden'),
+          ),
+        ],
       ),
-      onTap: () {
-        setState(() {
-          marked ? _Fav.remove(Name) : _Fav.add(Name);
-        });
-      },
-      onLongPress: () {
-        _pushExampel(Name);
-      },
-    );
-  }
-
-  void _pushExampel(String Name) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (BuildContext context) {
-        final Name0 = Name;
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(Name0),
-          ),
-          body: Center(
-            child: Image.network('https://picsum.photos/200/300'),
-          ),
-        );
-      }),
     );
   }
 }
@@ -109,5 +123,37 @@ class SearchBar extends StatelessWidget {
         print('Suchbegriff: $value');
       },
     );
+  }
+}
+
+Future<List<searchDaten>> fetchDeals() async {
+  final response = await http.get(Uri.parse('http://10.0.2.2:3000/konten'));
+
+  if (response.statusCode == 200) {
+    List<dynamic> jsonData = json.decode(response.body);
+    return jsonData.map((item) => searchDaten.fromJson(item)).toList();
+  } else {
+    throw Exception('Failed to load data');
+  }
+}
+
+sendData() async {
+  final response = await http.post(
+    Uri.parse(
+        'http://10.0.2.2:3000/sendData'), // Beispiel-Endpunkt für das Senden von Daten
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: jsonEncode(<String, String>{
+      'name': 'John Doe',
+      'email': 'john.doe@example.com',
+    }),
+  );
+  if (response.statusCode == 200) {
+    // Erfolgreich gesendet
+    print('Daten wurden erfolgreich gesendet');
+  } else {
+    // Fehler beim Senden
+    print('Fehler beim Senden der Daten: ${response.statusCode}');
   }
 }

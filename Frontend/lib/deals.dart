@@ -1,13 +1,15 @@
 import 'dart:convert';
-
+import 'DealsDaten.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 Widget deals() {
-  fetchitems() async {
-    final response = await http.get(Uri.parse('http://10.0.2.2:3000/data'));
+  Future<List<DealsDaten>> fetchDeals() async {
+    final response = await http.get(Uri.parse('http://10.0.2.2:3000/deals'));
+
     if (response.statusCode == 200) {
-      return response.body;
+      List<dynamic> jsonData = json.decode(response.body);
+      return jsonData.map((item) => DealsDaten.fromJson(item)).toList();
     } else {
       throw Exception('Failed to load data');
     }
@@ -37,17 +39,32 @@ Widget deals() {
   return Center(
     child: Column(
       children: [
-        FutureBuilder(
-          future: fetchitems(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const CircularProgressIndicator();
-            } else if (snapshot.hasError) {
-              return Text('Error: ${snapshot.error}');
-            } else {
-              return Text('Data from server: ${snapshot.data}');
-            }
-          },
+        Expanded(
+          child: FutureBuilder<List<DealsDaten>>(
+            future: fetchDeals(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(child: Text('No Data Found'));
+              } else {
+                List<DealsDaten> deals = snapshot.data!;
+                return ListView.builder(
+                  itemCount: deals.length,
+                  itemBuilder: (context, index) {
+                    return Card(
+                      child: ListTile(
+                        title: Text('ID: ${deals[index].id}'),
+                        subtitle: Text('Deal Mit: ${deals[index].dealMit}'),
+                      ),
+                    );
+                  },
+                );
+              }
+            },
+          ),
         ),
         ElevatedButton(
           onPressed: () {
