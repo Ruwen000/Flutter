@@ -16,7 +16,7 @@ Widget home() {
       ),
       body: TabBarView(
         children: [
-          Center(child: deals()),
+          const Center(child: deals()),
           Center(child: anfragen()),
         ],
       ),

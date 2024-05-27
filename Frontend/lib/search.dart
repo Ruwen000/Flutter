@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:mobileapp/kontodaten.dart';
 import 'dart:convert';
-import 'searchDaten.dart';
 
 class search extends StatefulWidget {
   const search({super.key});
@@ -28,7 +28,7 @@ class searchpage extends State<search> {
       child: Column(
         children: [
           Expanded(
-            child: FutureBuilder<List<searchDaten>>(
+            child: FutureBuilder<List<kontodaten>>(
               future: fetchDeals(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -38,7 +38,7 @@ class searchpage extends State<search> {
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const Center(child: Text('No Data Found'));
                 } else {
-                  List<searchDaten> deals = snapshot.data!;
+                  List<kontodaten> deals = snapshot.data!;
                   return ListView.builder(
                     itemCount: deals.length,
                     itemBuilder: (context, index) {
@@ -126,12 +126,12 @@ class SearchBar extends StatelessWidget {
   }
 }
 
-Future<List<searchDaten>> fetchDeals() async {
+Future<List<kontodaten>> fetchDeals() async {
   final response = await http.get(Uri.parse('http://10.0.2.2:3000/konten'));
 
   if (response.statusCode == 200) {
     List<dynamic> jsonData = json.decode(response.body);
-    return jsonData.map((item) => searchDaten.fromJson(item)).toList();
+    return jsonData.map((item) => kontodaten.fromJson(item)).toList();
   } else {
     throw Exception('Failed to load data');
   }
