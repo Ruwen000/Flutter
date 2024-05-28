@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "69776057506",
+    "project_id": "skillshare-33883",
+    "storage_bucket": "skillshare-33883.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:69776057506:android:1386e915e9a88e1ca2e3fb",
+        "android_client_info": {
+          "package_name": "com.example.mobileapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAFIXZmEeGOvhq6MqKiy6nIguaXAl1Opus"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

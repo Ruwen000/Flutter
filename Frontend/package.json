@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "foreground-child": "^3.1.1",
+    "glob": "^10.4.1",
+    "jackspeak": "^3.1.2",
+    "lru-cache": "^10.2.2",
+    "minimatch": "^9.0.4",
+    "path-scurry": "^1.11.1",
+    "rimraf": "^5.0.7",
+    "signal-exit": "^4.1.0"
+  }
+}
