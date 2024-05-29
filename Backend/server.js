@@ -1,8 +1,8 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
-const deals = require("./Datenbank/deals.json");
-const konten = require("./Datenbank/konten.json");
+const deals = require("./DatenBank/deals.json");
+const konten = require("./DatenBank/konten.json");
 const app = express();
 const port = 3000;
 
@@ -25,55 +25,56 @@ app.get('/konten', (req, res) => {
 
 console.log(deals);
 
-app.post('/sendData', (req, res) => {
-    const { name, email } = req.body;
-    console.log('Empfangene Daten:', name, email);
-    // Hier kannst du die empfangenen Daten verarbeiten, z.B. in einer Datenbank speichern
-    res.send('Daten erfolgreich empfangen');
+app.post('/sendData', async (req, res) => {
+    
+    const { name, email, Ort, skill } = req.body;
+    const skillArray = Array.isArray(skill) ? skill : [skill];
+    console.log('Empfangene Daten:', name, email, Ort, skill);
+  
+    const newData = { name, email, Ort, skill: skillArray };
+  
+    try {
+      await updateJsonFile("./DatenBank/konten.json", newData);
+      res.send('Daten erfolgreich empfangen und gespeichert');
+    } catch (error) {
+      console.error('Fehler beim Aktualisieren der JSON-Datei:', error);
+      res.status(500).send('Fehler beim Speichern der Daten');
+    }
   });
 
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
 
-function updateJsonFile(filePath, newData) {
-  // Schritt 1: Datei lesen
-  fs.readFile(filePath, 'utf8', (err, data) => {
-      if (err) {
-          console.error('Fehler beim Lesen der Datei:', err);
-          return;
-      }
-
+async function updateJsonFile(filePath, newData) {
+    try {
+      // Schritt 1: Datei lesen
+      const data = await fs.promises.readFile(filePath, 'utf8');
+  
       // Vorhandene Daten parsen
       let jsonData;
       try {
-          jsonData = JSON.parse(data);
+        jsonData = JSON.parse(data);
       } catch (parseErr) {
-          console.error('Fehler beim Parsen der JSON-Daten:', parseErr);
-          return;
+        throw new Error('Fehler beim Parsen der JSON-Daten: ' + parseErr.message);
       }
-
+  
       // Schritt 2: Neue Daten hinzufügen
       if (Array.isArray(jsonData)) {
-          jsonData.push(newData); // Wenn jsonData ein Array ist, füge das neue Element hinzu
+        jsonData.push(newData); // Wenn jsonData ein Array ist, füge das neue Element hinzu
       } else if (typeof jsonData === 'object') {
-          jsonData[newData.id] = newData; // Wenn jsonData ein Objekt ist, füge eine neue Eigenschaft hinzu
+        jsonData[newData.email] = newData; // Wenn jsonData ein Objekt ist, füge eine neue Eigenschaft hinzu
       } else {
-          console.error('Unerwartetes JSON-Datenformat');
-          return;
+        throw new Error('Unerwartetes JSON-Datenformat');
       }
-
+  
       // Schritt 3: Datei speichern
-      fs.writeFile(filePath, JSON.stringify(jsonData, null, 2), 'utf8', (writeErr) => {
-          if (writeErr) {
-              console.error('Fehler beim Schreiben der Datei:', writeErr);
-              return;
-          }
-
-          console.log('Datei erfolgreich aktualisiert');
-      });
-  });
-}
+      await fs.promises.writeFile(filePath, JSON.stringify(jsonData, null, 2), 'utf8');
+      console.log('Datei erfolgreich aktualisiert');
+    } catch (error) {
+      throw new Error('Fehler beim Aktualisieren der JSON-Datei: ' + error.message);
+    }
+  }
 
 function deleteFromJsonFile(filePath, idToDelete) {
   // Schritt 1: Datei lesen

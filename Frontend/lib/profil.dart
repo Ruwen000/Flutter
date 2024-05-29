@@ -72,7 +72,14 @@ class profilpage extends State<profil> {
                     List<kontodaten> data = snapshot.data!;
                     for (int i = 0; i < data.length; i++) {
                       if (user.email! == data[i].email) {
-                        return Text(data[i].name);
+                        return Column(
+                          children: [
+                            Text(data[i].name),
+                            Text(data[i].email),
+                            Text(data[i].Ort),
+                            ...data[i].skill.map((skill) => Text(skill)),
+                          ],
+                        );
                       }
                     }
                     return const SizedBox.shrink();
