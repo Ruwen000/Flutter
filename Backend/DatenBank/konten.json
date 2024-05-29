@@ -1,14 +1,22 @@
 [
     {
+      "email": "kevinfaul@gmail.com",
       "name": "Kevin",
       "skill": ["Arbeiten", "Palmen", "Naomi stalken"]
     },
     {
+       "email": "ruwenbuch@gmail.com",
         "name": "Ruwen",
         "skill": ["schach", "Kevin nerven", "Naomi sagen"]
     },
     {
+        "email": "Rudi@gmail.com",
         "name": "Rudi",
         "skill": ["albi", "hanuta", "essen"]
-    }
+    },
+    {
+      "email": "ana-lena@gmail.com",
+      "name": "Ana-Lena",
+      "skill": ["Skaten", "Schach", "Launisch"]
+  }
   ]

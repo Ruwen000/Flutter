@@ -2,6 +2,7 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:mobileapp/regestrieren.dart';
 
 class login extends StatefulWidget {
   const login({super.key});
@@ -16,8 +17,55 @@ class loginpage extends State<login> {
   final TextEditingController _passwordController = TextEditingController();
 
   void _login() async {
-    await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text, password: _passwordController.text);
+    showDialog(
+        context: context,
+        builder: (context) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        });
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: _emailController.text, password: _passwordController.text);
+      Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      Navigator.pop(context);
+      if (e.code == 'user-not-found') {
+        print('No User found');
+        wrongEmail();
+      } else {
+        print('Wrong Passwort');
+        wrongPasswort();
+      }
+    }
+  }
+
+  void wrongEmail() {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return const AlertDialog(
+            title: Text('Falsche Email'),
+          );
+        });
+  }
+
+  void wrongPasswort() {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return const AlertDialog(
+            title: Text('Falsches Passwort'),
+          );
+        });
+  }
+
+  void _register(BuildContext context) {
+    // Hier kannst du die neue Seite öffnen
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const regestrieren()),
+    );
   }
 
   @override
@@ -71,6 +119,17 @@ class loginpage extends State<login> {
               ElevatedButton(
                 onPressed: _login,
                 child: const Text('Anmelden'),
+              ),
+              const SizedBox(height: 8.0),
+              GestureDetector(
+                onTap: () => _register(context),
+                child: const Text(
+                  'Registrieren',
+                  style: TextStyle(
+                    color: Colors.blue,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
               ),
             ],
           ),

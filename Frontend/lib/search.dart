@@ -29,7 +29,7 @@ class searchpage extends State<search> {
         children: [
           Expanded(
             child: FutureBuilder<List<kontodaten>>(
-              future: fetchDeals(),
+              future: fetchKonto(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -126,7 +126,7 @@ class SearchBar extends StatelessWidget {
   }
 }
 
-Future<List<kontodaten>> fetchDeals() async {
+Future<List<kontodaten>> fetchKonto() async {
   final response = await http.get(Uri.parse('http://10.0.2.2:3000/konten'));
 
   if (response.statusCode == 200) {
