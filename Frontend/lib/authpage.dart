@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mobileapp/login.dart';
 import 'package:mobileapp/mainStatefulWidget.dart';
 
+// ignore: camel_case_types
 class authpage extends StatelessWidget {
   const authpage({super.key});
 

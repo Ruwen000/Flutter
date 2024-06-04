@@ -1,9 +1,8 @@
-// ignore_for_file: non_constant_identifier_names, camel_case_types
+// ignore_for_file: non_constant_identifier_names, camel_case_types, avoid_function_literals_in_foreach_calls
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:mobileapp/kontodaten.dart';
-import 'dart:convert';
 
 class search extends StatefulWidget {
   const search({super.key});
@@ -13,6 +12,19 @@ class search extends StatefulWidget {
 }
 
 class searchpage extends State<search> {
+  List<String> docID = [];
+  CollectionReference users = FirebaseFirestore.instance.collection('Nutzer');
+  final user = FirebaseAuth.instance.currentUser!;
+
+  Future getDocID() async {
+    docID.clear();
+    await FirebaseFirestore.instance.collection('Nutzer').get().then(
+          (snapshot) => snapshot.docs.forEach((element) {
+            docID.add(element.reference.id);
+          }),
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,81 +40,91 @@ class searchpage extends State<search> {
       child: Column(
         children: [
           Expanded(
-            child: FutureBuilder<List<kontodaten>>(
-              future: fetchKonto(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No Data Found'));
-                } else {
-                  List<kontodaten> deals = snapshot.data!;
-                  return ListView.builder(
-                    itemCount: deals.length,
-                    itemBuilder: (context, index) {
-                      return Card(
-                        child: ListTile(
-                          title: Text('Name: ${deals[index].name}'),
-                          subtitle: Text('Talent: ${deals[index].skill}'),
-                          onTap: () {
-                            setState(() {
-                              Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                    builder: (BuildContext context) {
-                                  final Name0 = deals[index].name;
-                                  return Scaffold(
-                                      appBar: AppBar(
-                                        title: Text(Name0),
-                                      ),
-                                      body: Center(
-                                        child: Column(
-                                          children: [
-                                            const CircleAvatar(
-                                              backgroundImage: NetworkImage(
-                                                  'https://picsum.photos/100'),
-                                              radius: 70,
-                                            ),
-                                            Expanded(
-                                                child: ListView.builder(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            16),
-                                                    itemCount: deals[index]
-                                                        .skill
-                                                        .length,
-                                                    itemBuilder: (context, i) {
-                                                      return ListTile(
-                                                        title: Text(deals[index]
-                                                            .skill[i]),
-                                                      );
-                                                    }))
-                                          ],
-                                        ),
-                                      ));
-                                }),
-                              );
-                            });
-                          },
-                        ),
-                      );
-                    },
-                  );
-                }
-              },
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              sendData();
-            },
-            child: const Text('Daten senden'),
-          ),
+              child: FutureBuilder(
+                  future: getDocID(),
+                  builder: (context, snapshot) {
+                    return ListView.builder(
+                        itemCount: docID.length,
+                        itemBuilder: (context, index) {
+                          return FutureBuilder<DocumentSnapshot>(
+                            future: users.doc(docID[index]).get(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.done) {
+                                Map<String, dynamic> data = snapshot.data!
+                                    .data() as Map<String, dynamic>;
+
+                                return Card(
+                                  child: ListTile(
+                                    title: Text('Name:  ${data['name']}'),
+                                    subtitle: Text('Skill:  ${data['Skill']}'),
+                                    onTap: () {
+                                      setState(() {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute<void>(
+                                              builder: (BuildContext context) {
+                                            return Scaffold(
+                                              appBar: AppBar(
+                                                title: Text(
+                                                    'Name: ${data['name']}'),
+                                              ),
+                                              body: Center(
+                                                child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    const CircleAvatar(
+                                                      backgroundImage: NetworkImage(
+                                                          'https://picsum.photos/100'),
+                                                      radius: 70,
+                                                    ),
+                                                    const SizedBox(height: 20),
+                                                    Text(
+                                                        'Name: ${data['name']}'),
+                                                    Text(
+                                                        'Skill: ${data['Skill']}'),
+                                                    Text(
+                                                        'Wohnort: ${data['ort']}'),
+                                                    Text(
+                                                        'Email Adresse: ${data['email']}'),
+                                                    const SizedBox(height: 20),
+                                                    ElevatedButton(
+                                                      onPressed: () {
+                                                        addDetails(
+                                                            data['email'],
+                                                            user.email!);
+                                                      },
+                                                      child: const Text(
+                                                          'Deal Anfrage'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          }),
+                                        );
+                                      });
+                                    },
+                                  ),
+                                );
+                              } else {
+                                return const Text('Loading...');
+                              }
+                            },
+                          );
+                        });
+                  })),
         ],
       ),
     );
   }
+}
+
+Future addDetails(String name1, String name2) async {
+  await FirebaseFirestore.instance.collection('Deals').add({
+    'Nehmer': name1,
+    'dealer': name2,
+  });
 }
 
 class SearchBar extends StatelessWidget {
@@ -123,37 +145,5 @@ class SearchBar extends StatelessWidget {
         print('Suchbegriff: $value');
       },
     );
-  }
-}
-
-Future<List<kontodaten>> fetchKonto() async {
-  final response = await http.get(Uri.parse('http://10.0.2.2:3000/konten'));
-
-  if (response.statusCode == 200) {
-    List<dynamic> jsonData = json.decode(response.body);
-    return jsonData.map((item) => kontodaten.fromJson(item)).toList();
-  } else {
-    throw Exception('Failed to load data');
-  }
-}
-
-sendData() async {
-  final response = await http.post(
-    Uri.parse(
-        'http://10.0.2.2:3000/sendData'), // Beispiel-Endpunkt für das Senden von Daten
-    headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    },
-    body: jsonEncode(<String, String>{
-      'name': 'John Doe',
-      'email': 'john.doe@example.com',
-    }),
-  );
-  if (response.statusCode == 200) {
-    // Erfolgreich gesendet
-    print('Daten wurden erfolgreich gesendet');
-  } else {
-    // Fehler beim Senden
-    print('Fehler beim Senden der Daten: ${response.statusCode}');
   }
 }

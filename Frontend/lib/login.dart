@@ -27,8 +27,10 @@ class loginpage extends State<login> {
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: _emailController.text, password: _passwordController.text);
+      // ignore: use_build_context_synchronously
       Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
+      // ignore: use_build_context_synchronously
       Navigator.pop(context);
       if (e.code == 'user-not-found') {
         print('No User found');

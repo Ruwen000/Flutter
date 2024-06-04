@@ -14,9 +14,9 @@ Widget home() {
           ],
         ),
       ),
-      body: TabBarView(
+      body: const TabBarView(
         children: [
-          const Center(child: deals()),
+          Center(child: deals()),
           Center(child: anfragen()),
         ],
       ),

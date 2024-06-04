@@ -1,9 +1,8 @@
-import 'dart:convert';
-import 'package:mobileapp/DealsKontoInfo.dart';
+// ignore_for_file: camel_case_types, avoid_function_literals_in_foreach_calls
 
-import 'DealsDaten.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 class deals extends StatefulWidget {
   const deals({super.key});
@@ -13,91 +12,80 @@ class deals extends StatefulWidget {
 }
 
 class dealspage extends State<deals> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: buildBody(),
-    );
+  List<String> docID = [];
+  final user = FirebaseAuth.instance.currentUser!;
+  CollectionReference users =
+      FirebaseFirestore.instance.collection('LaufendeDeals');
+
+  Future getDocID() async {
+    docID.clear();
+    await FirebaseFirestore.instance.collection('LaufendeDeals').get().then(
+          (snapshot) => snapshot.docs.forEach((element) {
+            docID.add(element.reference.id);
+          }),
+        );
   }
 
-  Widget buildBody() {
-    Future<List<DealsDaten>> fetchDeals() async {
-      final response = await http.get(Uri.parse('http://10.0.2.2:3000/deals'));
-
-      if (response.statusCode == 200) {
-        List<dynamic> jsonData = json.decode(response.body);
-        return jsonData.map((item) => DealsDaten.fromJson(item)).toList();
-      } else {
-        throw Exception('Failed to load data');
-      }
-    }
-
-    sendData() async {
-      final response = await http.post(
-        Uri.parse(
-            'http://10.0.2.2:3000/sendData'), // Beispiel-Endpunkt für das Senden von Daten
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, String>{
-          'name': 'John Doe',
-          'email': 'john.doe@example.com',
-        }),
-      );
-      if (response.statusCode == 200) {
-        // Erfolgreich gesendet
-        print('Daten wurden erfolgreich gesendet');
-      } else {
-        // Fehler beim Senden
-        print('Fehler beim Senden der Daten: ${response.statusCode}');
-      }
-    }
-
+  @override
+  Widget build(BuildContext context) {
     return Center(
       child: Column(
         children: [
           Expanded(
-            child: FutureBuilder<List<DealsDaten>>(
-              future: fetchDeals(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No Data Found'));
-                } else {
-                  List<DealsDaten> deals = snapshot.data!;
-                  return ListView.builder(
-                    itemCount: deals.length,
-                    itemBuilder: (context, index) {
-                      return Card(
-                        child: ListTile(
-                          title: Text('ID: ${deals[index].id}'),
-                          subtitle: Text('Deal Mit: ${deals[index].dealMit}'),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => dealskontoinfo(
-                                    dealMit: deals[index].dealMit),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  );
-                }
-              },
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              sendData();
-            },
-            child: const Text('Daten senden'),
-          ),
+              child: FutureBuilder(
+                  future: getDocID(),
+                  builder: (context, snapshot) {
+                    return ListView.builder(
+                        itemCount: docID.length,
+                        itemBuilder: (context, index) {
+                          return FutureBuilder<DocumentSnapshot>(
+                            future: users.doc(docID[index]).get(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.done) {
+                                Map<String, dynamic> data = snapshot.data!
+                                    .data() as Map<String, dynamic>;
+                                if (user.email! == data['Nehmer'] ||
+                                    user.email! == data['dealer']) {
+                                  return Card(
+                                    child: ListTile(
+                                      title: Text('Name:  ${data['Nehmer']}'),
+                                      subtitle:
+                                          Text('Name2:  ${data['dealer']}'),
+                                      onTap: () {
+                                        setState(() {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute<void>(builder:
+                                                (BuildContext context) {
+                                              return Scaffold(
+                                                appBar: AppBar(
+                                                  title: const Text('Anfrage'),
+                                                ),
+                                                body: Center(
+                                                  child: Column(
+                                                    children: [
+                                                      Text(
+                                                          'Laufender deal mit${data['dealer']} '),
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                            }),
+                                          );
+                                        });
+                                      },
+                                    ),
+                                  );
+                                } else {
+                                  return const SizedBox.shrink();
+                                }
+                              } else {
+                                return const Text('Loading...');
+                              }
+                            },
+                          );
+                        });
+                  })),
         ],
       ),
     );

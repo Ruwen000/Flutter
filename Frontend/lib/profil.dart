@@ -1,9 +1,8 @@
+// ignore_for_file: camel_case_types, avoid_function_literals_in_foreach_calls
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:mobileapp/kontodaten.dart';
-import 'dart:convert';
 
 class profil extends StatefulWidget {
   const profil({super.key});
@@ -21,6 +20,7 @@ class profilpage extends State<profil> {
   List<String> docID = [];
 
   Future getDocID() async {
+    docID.clear();
     await FirebaseFirestore.instance.collection('Nutzer').get().then(
           (snapshot) => snapshot.docs.forEach((element) {
             docID.add(element.reference.id);
@@ -28,18 +28,8 @@ class profilpage extends State<profil> {
         );
   }
 
-  Future<List<kontodaten>> fetchKonto() async {
-    final response = await http.get(Uri.parse('http://10.0.2.2:3000/konten'));
-
-    if (response.statusCode == 200) {
-      List<dynamic> jsonData = json.decode(response.body);
-      return jsonData.map((item) => kontodaten.fromJson(item)).toList();
-    } else {
-      throw Exception('Failed to load data');
-    }
-  }
-
   final user = FirebaseAuth.instance.currentUser!;
+  CollectionReference users = FirebaseFirestore.instance.collection('Nutzer');
 
   Widget buildBody() {
     return Scaffold(
@@ -59,34 +49,35 @@ class profilpage extends State<profil> {
             ),
             const Divider(),
             Expanded(
-              child: FutureBuilder<List<kontodaten>>(
-                future: fetchKonto(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No Data Found'));
-                  } else {
-                    List<kontodaten> data = snapshot.data!;
-                    for (int i = 0; i < data.length; i++) {
-                      if (user.email! == data[i].email) {
-                        return Column(
-                          children: [
-                            Text(data[i].name),
-                            Text(data[i].email),
-                            Text(data[i].Ort),
-                            ...data[i].skill.map((skill) => Text(skill)),
-                          ],
-                        );
-                      }
-                    }
-                    return const SizedBox.shrink();
-                  }
-                },
-              ),
-            ),
+                child: FutureBuilder(
+                    future: getDocID(),
+                    builder: (context, snapshot) {
+                      return ListView.builder(
+                          itemCount: docID.length,
+                          itemBuilder: (context, index) {
+                            return FutureBuilder<DocumentSnapshot>(
+                              future: users.doc(docID[index]).get(),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.done) {
+                                  Map<String, dynamic> data = snapshot.data!
+                                      .data() as Map<String, dynamic>;
+                                  if (data['email'] == user.email!) {
+                                    return ListTile(
+                                      title: Text('Name:  ${data['name']}'),
+                                      subtitle:
+                                          Text('Skill:  ${data['Skill']}'),
+                                    );
+                                  } else {
+                                    return const SizedBox.shrink();
+                                  }
+                                } else {
+                                  return const Text('Loading...');
+                                }
+                              },
+                            );
+                          });
+                    })),
           ],
         ),
       ),

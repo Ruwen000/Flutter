@@ -1,10 +1,8 @@
-// ignore_for_file: camel_case_types
+// ignore_for_file: camel_case_types, use_build_context_synchronously
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class regestrieren extends StatefulWidget {
   const regestrieren({super.key});
@@ -24,39 +22,18 @@ class regestrierenpage extends State<regestrieren> {
   Future signIn() async {
     await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text, password: _passwordController.text);
-    addDetails(_nameController.text.trim());
-    sendData(_nameController.text.trim(), _emailController.text.trim(),
+    addDetails(_nameController.text.trim(), _emailController.text.trim(),
         _ortController.text.trim(), _skillController.text.trim());
     Navigator.pop(context);
   }
 
-  Future addDetails(String name) async {
+  Future addDetails(String name, String email, String ort, String skill) async {
     await FirebaseFirestore.instance.collection('Nutzer').add({
       'name': name,
+      'email': email,
+      'ort': ort,
+      'Skill': skill,
     });
-  }
-
-  sendData(String name, String email, String ort, String skill) async {
-    final response = await http.post(
-      Uri.parse(
-          'http://10.0.2.2:3000/sendData'), // Beispiel-Endpunkt für das Senden von Daten
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
-        'name': name,
-        'email': email,
-        'Ort': ort,
-        'skill': skill,
-      }),
-    );
-    if (response.statusCode == 200) {
-      // Erfolgreich gesendet
-      print('Daten wurden erfolgreich gesendet');
-    } else {
-      // Fehler beim Senden
-      print('Fehler beim Senden der Daten: ${response.statusCode}');
-    }
   }
 
   @override

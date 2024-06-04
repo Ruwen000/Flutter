@@ -14,7 +14,7 @@ class mainStatefulWidget extends StatefulWidget {
 
 class MainWidget extends State<mainStatefulWidget> {
   int _selectedIndex = 0;
-  final List<Widget> _pages = <Widget>[home(), const search(), profil()];
+  final List<Widget> _pages = <Widget>[home(), const search(), const profil()];
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
