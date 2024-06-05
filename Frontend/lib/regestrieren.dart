@@ -8,10 +8,10 @@ class regestrieren extends StatefulWidget {
   const regestrieren({super.key});
 
   @override
-  State<regestrieren> createState() => regestrierenpage();
+  State<regestrieren> createState() => _RegestrierenPageState();
 }
 
-class regestrierenpage extends State<regestrieren> {
+class _RegestrierenPageState extends State<regestrieren> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -19,20 +19,48 @@ class regestrierenpage extends State<regestrieren> {
   final TextEditingController _ortController = TextEditingController();
   final TextEditingController _skillController = TextEditingController();
 
-  Future signIn() async {
-    await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text, password: _passwordController.text);
-    addDetails(_nameController.text.trim(), _emailController.text.trim(),
-        _ortController.text.trim(), _skillController.text.trim());
-    Navigator.pop(context);
+  Future<void> signIn() async {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+    );
+    try {
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+      await addDetails(
+        _nameController.text.trim(),
+        _emailController.text.trim(),
+        _ortController.text.trim(),
+        _skillController.text.trim(),
+      );
+      Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      Navigator.pop(context);
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Registrierung fehlgeschlagen'),
+            content: Text(e.message ?? 'Unbekannter Fehler'),
+          );
+        },
+      );
+    }
   }
 
-  Future addDetails(String name, String email, String ort, String skill) async {
+  Future<void> addDetails(
+      String name, String email, String ort, String skill) async {
     await FirebaseFirestore.instance.collection('Nutzer').add({
       'name': name,
       'email': email,
       'ort': ort,
-      'Skill': skill,
+      'skill': skill,
     });
   }
 
@@ -40,61 +68,122 @@ class regestrierenpage extends State<regestrieren> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Regestrieren'),
+        title: const Text('Registrieren'),
+        backgroundColor: Colors.teal,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'E-Mail',
-                  border: OutlineInputBorder(),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                SizedBox(
+                  height: 150.0,
+                  child: Image.asset('assets/login_image.png'),
                 ),
-              ),
-              const SizedBox(height: 16.0),
-              TextFormField(
-                controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Passwort',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 16.0),
+                TextFormField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(
+                    labelText: 'E-Mail',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.email),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Bitte E-Mail eingeben';
+                    }
+                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                      return 'Bitte eine gültige E-Mail eingeben';
+                    }
+                    return null;
+                  },
                 ),
-                obscureText: true,
-              ),
-              const SizedBox(height: 16.0),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Benutzername',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 16.0),
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(
+                    labelText: 'Passwort',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.lock),
+                  ),
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Bitte Passwort eingeben';
+                    }
+                    if (value.length < 6) {
+                      return 'Das Passwort muss mindestens 6 Zeichen lang sein';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              const SizedBox(height: 16.0),
-              TextFormField(
-                controller: _ortController,
-                decoration: const InputDecoration(
-                  labelText: 'Wohnort',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 16.0),
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Benutzername',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.person),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Bitte Benutzername eingeben';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              const SizedBox(height: 16.0),
-              TextFormField(
-                controller: _skillController,
-                decoration: const InputDecoration(
-                  labelText: 'Skill',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 16.0),
+                TextFormField(
+                  controller: _ortController,
+                  decoration: const InputDecoration(
+                    labelText: 'Wohnort',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.location_city),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Bitte Wohnort eingeben';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              const SizedBox(height: 16.0),
-              ElevatedButton(
-                onPressed: signIn,
-                child: const Text('Regestrieren'),
-              ),
-            ],
+                const SizedBox(height: 16.0),
+                TextFormField(
+                  controller: _skillController,
+                  decoration: const InputDecoration(
+                    labelText: 'Skill',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.build),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Bitte Skill eingeben';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16.0),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState?.validate() == true) {
+                      signIn();
+                      Navigator.pop(context);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                  ),
+                  child: const Text(
+                    'Registrieren',
+                    style: TextStyle(
+                        color: Colors.white), // Textfarbe auf weiß gesetzt
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

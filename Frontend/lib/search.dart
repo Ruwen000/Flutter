@@ -8,13 +8,15 @@ class search extends StatefulWidget {
   const search({super.key});
 
   @override
-  State<StatefulWidget> createState() => searchpage();
+  State<StatefulWidget> createState() => SearchPage();
 }
 
-class searchpage extends State<search> {
+class SearchPage extends State<search> {
   List<String> docID = [];
+  List<Map<String, dynamic>> filteredResults = [];
   CollectionReference users = FirebaseFirestore.instance.collection('Nutzer');
   final user = FirebaseAuth.instance.currentUser!;
+  String searchTerm = "";
 
   Future getDocID() async {
     docID.clear();
@@ -25,11 +27,40 @@ class searchpage extends State<search> {
         );
   }
 
+  void searchUser(String searchTerm) async {
+    filteredResults.clear();
+    for (var id in docID) {
+      var docSnapshot = await users.doc(id).get();
+      Map<String, dynamic> data = docSnapshot.data() as Map<String, dynamic>;
+      if (data['Skill']
+          .toString()
+          .toLowerCase()
+          .contains(searchTerm.toLowerCase())) {
+        filteredResults.add(data);
+      }
+    }
+    setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getDocID().then((_) {
+      searchUser(""); // initially show all users
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const SearchBar(),
+        title: SearchBar(onSearchChanged: (value) {
+          setState(() {
+            searchTerm = value;
+            searchUser(searchTerm);
+          });
+        }),
+        backgroundColor: Colors.teal,
       ),
       body: _buildBody(),
     );
@@ -40,80 +71,109 @@ class searchpage extends State<search> {
       child: Column(
         children: [
           Expanded(
-              child: FutureBuilder(
-                  future: getDocID(),
-                  builder: (context, snapshot) {
-                    return ListView.builder(
-                        itemCount: docID.length,
-                        itemBuilder: (context, index) {
-                          return FutureBuilder<DocumentSnapshot>(
-                            future: users.doc(docID[index]).get(),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.done) {
-                                Map<String, dynamic> data = snapshot.data!
-                                    .data() as Map<String, dynamic>;
+            child: filteredResults.isEmpty
+                ? const Center(
+                    child: Text("Keine Ergebnisse gefunden"),
+                  )
+                : ListView.builder(
+                    itemCount: filteredResults.length,
+                    itemBuilder: (context, index) {
+                      Map<String, dynamic> data = filteredResults[index];
 
-                                return Card(
-                                  child: ListTile(
-                                    title: Text('Name:  ${data['name']}'),
-                                    subtitle: Text('Skill:  ${data['Skill']}'),
-                                    onTap: () {
-                                      setState(() {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute<void>(
-                                              builder: (BuildContext context) {
-                                            return Scaffold(
-                                              appBar: AppBar(
-                                                title: Text(
-                                                    'Name: ${data['name']}'),
-                                              ),
-                                              body: Center(
-                                                child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
-                                                  children: [
-                                                    const CircleAvatar(
-                                                      backgroundImage: NetworkImage(
-                                                          'https://picsum.photos/100'),
-                                                      radius: 70,
-                                                    ),
-                                                    const SizedBox(height: 20),
-                                                    Text(
-                                                        'Name: ${data['name']}'),
-                                                    Text(
-                                                        'Skill: ${data['Skill']}'),
-                                                    Text(
-                                                        'Wohnort: ${data['ort']}'),
-                                                    Text(
-                                                        'Email Adresse: ${data['email']}'),
-                                                    const SizedBox(height: 20),
-                                                    ElevatedButton(
-                                                      onPressed: () {
-                                                        addDetails(
-                                                            data['email'],
-                                                            user.email!);
-                                                      },
-                                                      child: const Text(
-                                                          'Deal Anfrage'),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            );
-                                          }),
-                                        );
-                                      });
-                                    },
-                                  ),
-                                );
-                              } else {
-                                return const Text('Loading...');
-                              }
-                            },
-                          );
-                        });
-                  })),
+                      return Card(
+                        elevation: 4,
+                        color: Colors.teal[50],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: ListTile(
+                          leading: const Icon(Icons.person),
+                          title: Text(
+                            'Name: ${data['name']}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.teal[800],
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Skill: ${data['skill']}',
+                            style: TextStyle(color: Colors.teal[600]),
+                          ),
+                          trailing: const Icon(Icons.arrow_forward_ios,
+                              color: Colors.teal),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (BuildContext context) {
+                                  return Scaffold(
+                                    appBar: AppBar(
+                                      title: Text('Name: ${data['name']}'),
+                                      backgroundColor: Colors.teal,
+                                    ),
+                                    body: Center(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          const CircleAvatar(
+                                            backgroundImage: NetworkImage(
+                                                'https://picsum.photos/100'),
+                                            radius: 70,
+                                          ),
+                                          const SizedBox(height: 20),
+                                          Text(
+                                            'Name: ${data['name']}',
+                                            style: const TextStyle(
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          Text(
+                                            'Skill: ${data['skill']}',
+                                            style: TextStyle(
+                                              fontSize: 20,
+                                              color: Colors.teal[600],
+                                            ),
+                                          ),
+                                          Text(
+                                            'Wohnort: ${data['ort']}',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              color: Colors.teal[700],
+                                            ),
+                                          ),
+                                          Text(
+                                            'Email Adresse: ${data['email']}',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              color: Colors.teal[700],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 20),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              addDetails(
+                                                  data['email'], user.email!);
+                                              Navigator.pop(context);
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.teal,
+                                            ),
+                                            child: const Text('Deal Anfrage'),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+          ),
         ],
       ),
     );
@@ -128,22 +188,19 @@ Future addDetails(String name1, String name2) async {
 }
 
 class SearchBar extends StatelessWidget {
-  const SearchBar({super.key});
+  final Function(String) onSearchChanged;
+
+  const SearchBar({required this.onSearchChanged, super.key});
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       decoration: const InputDecoration(
-        hintText:
-            'Suche...', // Text, der erscheint, wenn keine Eingabe erfolgt ist
+        hintText: 'Suche...',
         border: InputBorder.none,
-        icon: Icon(
-            Icons.search), // Ein Suchsymbol auf der linken Seite der Suchleiste
+        icon: Icon(Icons.search, color: Colors.white),
       ),
-      onChanged: (value) {
-        // Hier kannst du Logik einfügen, die bei jeder Änderung im Suchfeld ausgeführt wird
-        print('Suchbegriff: $value');
-      },
+      onChanged: onSearchChanged,
     );
   }
 }

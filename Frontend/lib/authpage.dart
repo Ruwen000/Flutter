@@ -16,7 +16,7 @@ class authpage extends StatelessWidget {
           if (snapshot.hasData) {
             return const mainStatefulWidget();
           } else {
-            return const login();
+            return const Login();
           }
         },
       ),
