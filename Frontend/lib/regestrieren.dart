@@ -1,5 +1,3 @@
-// ignore_for_file: camel_case_types, use_build_context_synchronously
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -39,9 +37,10 @@ class _RegestrierenPageState extends State<regestrieren> {
         _ortController.text.trim(),
         _skillController.text.trim(),
       );
-      Navigator.pop(context);
+      Navigator.pop(context); // Close the progress indicator dialog
+      Navigator.pop(context); // Navigate back after successful registration
     } on FirebaseAuthException catch (e) {
-      Navigator.pop(context);
+      Navigator.pop(context); // Close the progress indicator dialog
       showDialog(
         context: context,
         builder: (context) {
@@ -170,7 +169,6 @@ class _RegestrierenPageState extends State<regestrieren> {
                   onPressed: () {
                     if (_formKey.currentState?.validate() == true) {
                       signIn();
-                      Navigator.pop(context);
                     }
                   },
                   style: ElevatedButton.styleFrom(

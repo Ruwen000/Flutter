@@ -1,5 +1,3 @@
-// ignore_for_file: camel_case_types
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mobileapp/regestrieren.dart';
@@ -16,28 +14,40 @@ class _LoginPageState extends State<Login> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   void _login() async {
     if (_formKey.currentState!.validate()) {
       showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          });
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        },
+      );
       try {
         await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: _emailController.text,
           password: _passwordController.text,
         );
-        Navigator.pop(context);
+        Navigator.pop(context); // Close the loading dialog
+        Navigator.pop(context); // Navigate back after successful login
       } on FirebaseAuthException catch (e) {
-        Navigator.pop(context);
+        Navigator.pop(context); // Close the loading dialog
         if (e.code == 'user-not-found') {
           _showErrorDialog('Kein Benutzer gefunden');
         } else if (e.code == 'wrong-password') {
           _showErrorDialog('Falsches Passwort');
+        } else {
+          _showErrorDialog(
+              'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
         }
       }
     }
@@ -88,8 +98,7 @@ class _LoginPageState extends State<Login> {
               children: <Widget>[
                 SizedBox(
                   height: 150.0,
-                  child: Image.asset(
-                      'assets/login_image.png'), // Pfad zu deinem Bild
+                  child: Image.asset('assets/login_image.png'),
                 ),
                 const SizedBox(height: 16.0),
                 TextFormField(
@@ -134,10 +143,7 @@ class _LoginPageState extends State<Login> {
                 ),
                 const SizedBox(height: 16.0),
                 ElevatedButton(
-                  onPressed: () {
-                    _login();
-                    Navigator.pop(context);
-                  },
+                  onPressed: _login,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                         vertical: 12.0, horizontal: 24.0),

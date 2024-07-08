@@ -25,44 +25,46 @@ class _MainWidgetState extends State<mainStatefulWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.teal,
-        toolbarHeight: 50.0,
-        flexibleSpace: Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'Skill',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(50.0),
+        child: Container(
+          padding: const EdgeInsets.only(top: 20.0),
+          color: Colors.blue[900],
+          child: Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Skill',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16), // Abstand zwischen Skill und Logo
-              Image.asset(
-                'assets/logo.png',
-                width: 50,
-                height: 50,
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(width: 16), // Abstand zwischen Logo und Share
-              const Text(
-                'Share',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                const SizedBox(width: 16), // Abstand zwischen Skill und Logo
+                Image.asset(
+                  'assets/logo.png',
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.contain,
                 ),
-              ),
-            ],
+                const SizedBox(width: 16), // Abstand zwischen Logo und Share
+                const Text(
+                  'Share',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-      body: Center(
-        child: _pages.elementAt(_selectedIndex),
-      ),
+      body: _pages[_selectedIndex], // Direkt das gewählte page-Widget anzeigen
+      backgroundColor: Colors.black, // Hintergrundfarbe der App in Schwarz
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -79,7 +81,11 @@ class _MainWidgetState extends State<mainStatefulWidget> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.teal,
+        selectedItemColor: Colors.blue,
+        unselectedItemColor:
+            Colors.white, // Farbe für nicht ausgewählte Symbole
+        backgroundColor: Colors
+            .black, // Hintergrundfarbe der Bottom Navigation Bar in Schwarz
         onTap: _onItemTapped,
       ),
     );

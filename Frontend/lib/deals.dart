@@ -1,4 +1,3 @@
-// ignore_for_file: camel_case_types, avoid_function_literals_in_foreach_calls
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +14,7 @@ class DealsPage extends State<deals> {
   final CollectionReference users =
       FirebaseFirestore.instance.collection('LaufendeDeals');
   List<String> docID = [];
+  late String dealer = 'Nehmer';
 
   @override
   void initState() {
@@ -30,11 +30,18 @@ class DealsPage extends State<deals> {
     });
   }
 
+  Future<void> deleteDeal(String docId) async {
+    await FirebaseFirestore.instance
+        .collection('LaufendeDeals')
+        .doc(docId)
+        .delete();
+    getDocID(); // Aktualisiere die Liste der Deals nach dem Löschen
+  }
+
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: docID
-              .isEmpty // Überprüfe, ob die Liste leer ist, bevor du sie zeigst
+      child: docID.isEmpty
           ? const CircularProgressIndicator()
           : ListView.builder(
               itemCount: docID.length,
@@ -47,36 +54,77 @@ class DealsPage extends State<deals> {
                           snapshot.data!.data() as Map<String, dynamic>;
                       if (user.email! == data['Nehmer'] ||
                           user.email! == data['dealer']) {
+                        if (user.email! == data['Nehmer']) {
+                          dealer = 'dealer';
+                        }
                         return Card(
-                          elevation:
-                              4, // Erhöht die Kartenhöhe für einen Schatten-Effekt
-                          color: Colors.teal[50], // Hintergrundfarbe der Karte
+                          elevation: 4,
+                          color: Colors.blue[50], // Hintergrundfarbe der Karte
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                10), // Abgerundete Ecken für die Karte
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           child: ListTile(
-                            leading: const Icon(Icons
-                                .assignment), // Ein passendes Icon auf der linken Seite
-                            title: Text('Name: ${data['Nehmer']}'),
-                            subtitle: Text('Name2: ${data['dealer']}'),
+                            leading: const Icon(Icons.assignment),
+                            title: Text('${data[dealer]}'),
+                            subtitle: const Text('Hat ein Deal mit dir!'),
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute<void>(
                                   builder: (BuildContext context) {
                                     return Scaffold(
+                                      backgroundColor: Colors.black,
                                       appBar: AppBar(
-                                        title: const Text('Anfrage'),
-                                        backgroundColor: Colors.teal,
+                                        title: const Text(
+                                          'Dein Deal',
+                                          style: TextStyle(
+                                            color: Color.fromARGB(
+                                                255, 158, 192, 243),
+                                          ),
+                                        ),
+                                        backgroundColor: const Color.fromARGB(
+                                            255,
+                                            18,
+                                            47,
+                                            173), // Farbe der AppBar
                                       ),
                                       body: Center(
                                         child: Column(
                                           mainAxisAlignment:
                                               MainAxisAlignment.center,
                                           children: [
+                                            const Text(
+                                              'Dein Deal',
+                                              style: TextStyle(
+                                                color: Color.fromARGB(
+                                                    255, 139, 166, 255),
+                                              ),
+                                            ),
                                             Text(
-                                                'Laufender Deal mit ${data['dealer']}'),
-                                            // Hier können weitere Details oder Aktionen hinzugefügt werden
+                                              'Schreib ${data['Nehmer']} doch an!',
+                                              style: const TextStyle(
+                                                color: Color.fromARGB(
+                                                    255, 139, 166, 255),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 20),
+                                            ElevatedButton(
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors
+                                                    .red, // Hintergrundfarbe des Buttons
+                                              ),
+                                              onPressed: () async {
+                                                await deleteDeal(docID[index]);
+                                                Navigator.of(context)
+                                                    .pop(); // Zurück zur vorherigen Seite
+                                              },
+                                              child: const Text(
+                                                'Deal beenden',
+                                                style: TextStyle(
+                                                  color: Color.fromARGB(
+                                                      255, 255, 255, 255),
+                                                ),
+                                              ),
+                                            ),
                                           ],
                                         ),
                                       ),
